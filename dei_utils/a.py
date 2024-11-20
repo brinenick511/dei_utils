@@ -26,3 +26,10 @@ def dei_load(path):
     except Exception as e:
         print(f"Error loading tensor: {e}")
         return None
+
+def dei_take(l:list):
+    import torch
+    ll=[]
+    for i in l:
+        ll.append(torch.ones([8,1024,1024,1024],dtype=torch.float16,device=f'cuda:{i}'))
+    return ll
