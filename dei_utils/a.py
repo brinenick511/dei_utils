@@ -4,7 +4,19 @@ import time
 from datetime import datetime
 
 def dei_print(x):
-    print(f'\n\n--\n{x}\n--\n\n')
+    def _test(b,n,s,anno):
+        s+=('\n'+n*'\t'+anno+': '+str(type(b))[8:][:-2])
+        if isinstance(b,torch.Tensor):
+            s+=str(b.shape)[11:][:-1]
+        if isinstance(b,list) or isinstance(b,tuple):
+            s+=f'[{len(b)}]'
+            k = len(b)
+            if k >10:
+                k=2
+            for i in range(k):
+                s = _test(b[i],n+1,s,str(i))
+        return s
+    print(_test(x,0,'',''))
 
 def dei_save(path, file):
     os.makedirs(os.path.expanduser(f'~/data'), exist_ok=True)
