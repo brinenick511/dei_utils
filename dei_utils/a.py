@@ -2,6 +2,7 @@ import os
 import torch
 import time
 from datetime import datetime
+import pynvml
 
 def dei_print(x):
     def _test(b,n,s,anno):
@@ -41,21 +42,25 @@ def dei_load(path):
 class Dei_Conqueror:
     def __init__(self, interval_sec=5*60, mercy = 5, sleep_sec=5):
         self.gpu_list = []
-        self.memory_threshold = 0.2
-        self.total_memory = 24
+        self.memory_threshold = 0.15
+        # self.total_memory = 24
         self.allocated_tensors = {}
         self.interval = interval_sec
         self.gpu_detection_count = {}
         self.mercy = mercy
         self.sleep_sec = sleep_sec
         self.cnt=0
+        pynvml.nvmlInit()
 
     def get_available_gpus(self):
         available_gpus = []
         for i in range(torch.cuda.device_count()):
-            allocated_memory = torch.cuda.memory_allocated(i)
-            total_memory = torch.cuda.get_device_properties(i).total_memory
-            used_percentage = allocated_memory / total_memory
+            # allocated_memory = torch.cuda.memory_allocated(f'cuda:{i}')
+            # total_memory = torch.cuda.get_device_properties(f'cuda:{i}').total_memory
+            # used_percentage = allocated_memory / total_memory
+            handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+            mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+            used_percentage = mem_info.used / mem_info.total
             if i not in self.gpu_detection_count:
                 self.gpu_detection_count[i] = 0
             if used_percentage < self.memory_threshold:
@@ -75,8 +80,8 @@ class Dei_Conqueror:
         b = (64*torch.rand(len(gpus))).round()+512-64
         c = (64*torch.rand(len(gpus))).round()+1024-64
         d = (64*torch.rand(len(gpus))).round()+1024-64
-        for i in gpus:
-            tensor = torch.zeros(int((a[i]*b[i]*c[i]*d[i]).item()), device=f'cuda:{i}')
+        for i in range(len(gpus)):
+            tensor = torch.zeros(int((a[i]*b[i]*c[i]*d[i]).item()), device=f'cuda:{gpus[i]}')
             self.allocated_tensors[i] = tensor
             # print(f"GPU {gpu} 已分配 20GB 的显存。")
         print(f'conquered: {gpus}')
@@ -104,4 +109,5 @@ class Dei_Conqueror:
             else:
                 # print("没有可用的GPU满足要求。")
                 print(f'do nothing: {self.gpu_detection_count}')
+            print(f'sleep for {self.interval} seconds')
             time.sleep(self.interval)
