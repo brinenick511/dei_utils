@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 import pynvml
 
-def dei_print(x):
+def debug(x):
     def _test(b,n,s,anno):
         s+=('\n'+n*'\t'+anno+': '+str(type(b))[8:][:-2])
         if isinstance(b,torch.Tensor):
@@ -19,7 +19,7 @@ def dei_print(x):
         return s
     print(_test(x,0,'',''))
 
-def dei_save(path, file):
+def save(file, path):
     os.makedirs(os.path.expanduser(f'~/data'), exist_ok=True)
     path = f'~/data/{path}.pt'
     path = os.path.expanduser(path)
@@ -29,7 +29,25 @@ def dei_save(path, file):
     except Exception as e:
         print(f"Error saving tensor: {e}")
 
-def dei_load(path):
+def store(file, path):
+    os.makedirs(os.path.expanduser(f'~/data'), exist_ok=True)
+    path = f'~/data/{path}.pt'
+    path = os.path.expanduser(path)
+    if os.path.exists(path):
+        l = torch.load(path)
+    else:
+        l = []
+    if isinstance(file,list):
+        l+=file
+    else:
+        l.append(file)
+    try:
+        # print(f'Saving tensor to {path}')
+        torch.save(l, path)
+    except Exception as e:
+        print(f"Error saving tensor: {e}")
+
+def load(path):
     path = f'~/data/{path}.pt'
     path = os.path.expanduser(path)
     try:
@@ -39,7 +57,7 @@ def dei_load(path):
         print(f"Error loading tensor: {e}")
         return None
 
-class Dei_Conqueror:
+class Conqueror:
     def __init__(self, interval_sec=5*60, mercy = 5, sleep_sec=5):
         self.gpu_list = []
         self.memory_threshold = 0.15
