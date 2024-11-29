@@ -58,7 +58,7 @@ def load(path):
         return None
 
 class Conqueror:
-    def __init__(self, interval_sec=5*60, mercy = 5, sleep_sec=5):
+    def __init__(self, interval_sec=5*60, mercy = 5, max_num = 8, sleep_sec=5,):
         self.gpu_list = []
         self.memory_threshold = 0.15
         # self.total_memory = 24
@@ -66,6 +66,7 @@ class Conqueror:
         self.interval = interval_sec
         self.gpu_detection_count = {}
         self.mercy = mercy
+        self.max_num = max_num
         self.sleep_sec = sleep_sec
         self.cnt=0
         pynvml.nvmlInit()
@@ -90,7 +91,8 @@ class Conqueror:
                     print(f'{i}: skipped')
             else:
                 self.gpu_detection_count[i]=0
-        
+        if len(available_gpus) > self.max_num:
+            available_gpus = available_gpus[:self.max_num]
         return available_gpus
 
     def allocate_memory_on_gpus(self, gpus):
@@ -114,18 +116,26 @@ class Conqueror:
 
     def conquer(self):
         while True:
-            self.cnt+=1
-            print(f'\n### {self.cnt}')
-            print(datetime.now().strftime('%Y-%m-%d, %A, %H:%M:%S'))
-            self.release_memory()
-            time.sleep(self.sleep_sec)
-            available_gpus = self.get_available_gpus()
-            if available_gpus:
-                # print(f"找到可用的GPU: {available_gpus}")
-                print(f'find: {self.gpu_detection_count}')
-                self.allocate_memory_on_gpus(available_gpus)
-            else:
-                # print("没有可用的GPU满足要求。")
-                print(f'do nothing: {self.gpu_detection_count}')
-            print(f'sleep for {self.interval} seconds')
-            time.sleep(self.interval)
+            try:
+                self.cnt+=1
+                print(f'\n### {self.cnt}')
+                print(datetime.now().strftime('%Y-%m-%d, %A, %H:%M:%S'))
+                self.release_memory()
+                time.sleep(self.sleep_sec)
+                available_gpus = self.get_available_gpus()
+                if available_gpus:
+                    if len(available_gpus) >=3:
+                        s=''
+                        for g in available_gpus:
+                            s=f'{s}{g} '
+                        return s
+                    print(f'find: {self.gpu_detection_count}')
+                    self.allocate_memory_on_gpus(available_gpus)
+                else:
+                    # print("没有可用的GPU满足要求。")
+                    print(f'do nothing: {self.gpu_detection_count}')
+                print(f'sleep for {self.interval} seconds')
+                time.sleep(self.interval)
+            except Exception as e:
+                print(f"异常捕获: {e}")
+                return '0'
