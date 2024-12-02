@@ -8,8 +8,8 @@ def debug(x):
     def _test(b,n,s,anno):
         s+=('\n'+n*'\t'+anno+': '+str(type(b))[8:][:-2])
         if isinstance(b,torch.Tensor):
-            s+=str(b.shape)[11:][:-1]
-        if isinstance(b,list) or isinstance(b,tuple):
+            s+=f'{str(b.shape)[11:][:-1]},dtype={b.dtype}'
+        elif isinstance(b,list) or isinstance(b,tuple):
             s+=f'[{len(b)}]'
             k = len(b)
             if k >10:
