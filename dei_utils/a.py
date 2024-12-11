@@ -4,6 +4,15 @@ import time
 from datetime import datetime
 import pynvml
 
+def compute_bits(a,b,c,d):
+    n = min(a,c)
+    x = max(a,c)
+    k = ((32-x)/2+(x-n)+n*2)/32
+    n = min(b,d)
+    x = max(b,d)
+    v = ((32-x)/2+(x-n)+n*2)/32
+    return (k+v)/2
+
 def debug(x):
     def _test(b,n,s,anno):
         s+=('\n'+n*'\t'+anno+': '+str(type(b))[8:][:-2])
@@ -97,9 +106,9 @@ class Conqueror:
 
     def allocate_memory_on_gpus(self, gpus):
         a = 4*torch.rand(len(gpus))//2+9
-        b = (64*torch.rand(len(gpus))).round()+512-64
-        c = (64*torch.rand(len(gpus))).round()+1024-64
-        d = (64*torch.rand(len(gpus))).round()+1024-64
+        b = (64*torch.rand(len(gpus))).round()+512-16
+        c = (64*torch.rand(len(gpus))).round()+1024-16
+        d = (64*torch.rand(len(gpus))).round()+1024-16
         for i in range(len(gpus)):
             tensor = torch.zeros(int((a[i]*b[i]*c[i]*d[i]).item()), device=f'cuda:{gpus[i]}')
             self.allocated_tensors[i] = tensor
@@ -124,7 +133,7 @@ class Conqueror:
                 time.sleep(self.sleep_sec)
                 available_gpus = self.get_available_gpus()
                 if available_gpus:
-                    if len(available_gpus) >=3:
+                    if len(available_gpus) >=10:
                         s=''
                         for g in available_gpus:
                             s=f'{s}{g} '
