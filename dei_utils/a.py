@@ -148,3 +148,12 @@ class Conqueror:
             except Exception as e:
                 print(f"异常捕获: {e}")
                 return '0'
+
+class Alternator:
+    def __init__(self,max_num):
+        self.max_num = max_num
+        self.value = 0
+    
+    def next(self):
+        self.value = (self.value+1)%self.max_num
+        return self.value
