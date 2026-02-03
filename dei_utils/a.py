@@ -3,6 +3,34 @@ import torch
 import time
 from datetime import datetime
 import pynvml
+import requests
+import sys
+
+def barkbark(title="Done", body="Done", num=1):
+    body_with_bark = f"{body}?sound=healthnotification"
+    bark(title, body_with_bark, num)
+
+def bark(title="Done", body=None, num=1):
+    key = os.getenv('BARK_KEY')
+    if not key:
+        print("Error: BARK_KEY not found", file=sys.stderr)
+        return
+    num = int(num)
+    file_path = os.path.abspath(__file__)
+    for i in range(num):
+        if num > 1:
+            title_with_num = f"{str(title)}_#{i}_{num-1}#"
+        else:
+            title_with_num = title
+        if body:
+            url = f"https://api.day.app/{key}/{title_with_num}/{body}"
+        else:
+            url = f"https://api.day.app/{key}/{title_with_num}"
+        try:
+            print(f'\n### BARK FROM {file_path} ###\n------\n{url}\n------\n### BARK FROM {file_path} ###\n')
+            requests.get(url, timeout=10)
+        except Exception as e:
+            print(f"Notification failed: {e}", file=sys.stderr)
 
 def compute_bits(a,b,c,d):
     n = min(a,c)
@@ -67,7 +95,7 @@ def load(path):
         return None
 
 class Conqueror:
-    def __init__(self, interval_sec=5*60, mercy = 5, max_num = 8, sleep_sec=5,):
+    def __init__(self, interval_sec=5*60, mercy = 5, max_num = 10, sleep_sec=5,):
         self.gpu_list = []
         self.memory_threshold = 0.15
         # self.total_memory = 24
@@ -145,6 +173,23 @@ class Conqueror:
                     print(f'do nothing: {self.gpu_detection_count}')
                 print(f'sleep for {self.interval} seconds')
                 time.sleep(self.interval)
+            except Exception as e:
+                print(f"异常捕获: {e}")
+                return '0'
+            
+    def detect(self):
+        while True:
+            try:
+                self.cnt+=1
+                print(f'\n### {self.cnt}')
+                print(datetime.now().strftime('%Y-%m-%d, %A, %H:%M:%S'))
+                time.sleep(self.sleep_sec)
+                available_gpus = self.get_available_gpus()
+                if available_gpus:
+                    num_available = len(available_gpus)
+                    print(f'[FIND] {num_available:02d}')
+                    if num_available >= 2:
+                        pass
             except Exception as e:
                 print(f"异常捕获: {e}")
                 return '0'
